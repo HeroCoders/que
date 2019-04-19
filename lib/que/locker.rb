@@ -116,9 +116,11 @@ module Que
 
       # To prevent race conditions, let every worker get into a ready state
       # before starting up the locker thread.
-      loop do
-        break if job_buffer.waiting_count == workers.count
-        sleep 0.001
+      Timeout::timeout(5, nil, "Timed out waiting for workers ") do
+        loop do
+          break if job_buffer.waiting_count == workers.count
+          sleep 0.001
+        end
       end
 
       # If we weren't passed a specific connection_url, borrow a connection from

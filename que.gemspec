@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['christopher.m.hanks@gmail.com']
   spec.description   = %q{A job queue that uses PostgreSQL's advisory locks for speed and reliability.}
   spec.summary       = %q{A PostgreSQL-based Job Queue}
-  spec.homepage      = 'https://github.com/chanks/que'
+  spec.homepage      = 'https://github.com/que-rb/que'
   spec.license       = 'MIT'
 
   files_to_exclude = [
@@ -29,5 +29,5 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler', '~> 1.3'
+  spec.add_development_dependency 'bundler'
 end

@@ -1,6 +1,6 @@
 # Que
 
-**This README and the rest of the docs on the master branch all refer to Que 1.0, which is currently in beta. If you're using version 0.x, please refer to the docs on [the 0.x branch](https://github.com/chanks/que/tree/0.x).**
+**This README and the rest of the docs on the master branch all refer to Que 1.0, which is currently in beta. If you're using version 0.x, please refer to the docs on [the 0.x branch](https://github.com/que-rb/que/tree/0.x).**
 
 *TL;DR: Que is a high-performance job queue that improves the reliability of your application by protecting your jobs with the same [ACID guarantees](https://en.wikipedia.org/wiki/ACID) as the rest of your data.*
 
@@ -17,7 +17,7 @@ Additionally, there are the general benefits of storing jobs in Postgres, alongs
   * **Fewer Dependencies** - If you're already using Postgres (and you probably should be), a separate queue is another moving part that can break.
   * **Security** - Postgres' support for SSL connections keeps your data safe in transport, for added protection when you're running workers on cloud platforms that you can't completely control.
 
-Que's primary goal is reliability. You should be able to leave your application running indefinitely without worrying about jobs being lost due to a lack of transactional support, or left in limbo due to a crashing process. Que does everything it can to ensure that jobs you queue are performed exactly once (though the occasional repetition of a job can be impossible to avoid - see the docs on [how to write a reliable job](https://github.com/chanks/que/blob/master/docs/writing_reliable_jobs.md)).
+Que's primary goal is reliability. You should be able to leave your application running indefinitely without worrying about jobs being lost due to a lack of transactional support, or left in limbo due to a crashing process. Que does everything it can to ensure that jobs you queue are performed exactly once (though the occasional repetition of a job can be impossible to avoid - see the docs on [how to write a reliable job](https://github.com/que-rb/que/blob/master/docs/writing_reliable_jobs.md)).
 
 Que's secondary goal is performance. The worker process is multithreaded, so that a single process can run many jobs simultaneously.
 
@@ -132,14 +132,34 @@ If you're using ActiveRecord to dump your database's schema, please [set your sc
 
 Pre-1.0, the default queue name needed to be configured in order for Que to work out of the box with Rails. In 1.0 the default queue name is now 'default', as Rails expects, but when Rails enqueues some types of jobs it may try to use another queue name that isn't worked by default - in particular, ActionMailer uses a queue named 'mailers' by default, so in your app config you'll also need to set `config.action_mailer.deliver_later_queue_name = 'default'` if you're using ActionMailer.
 
+Also, if you would like to integrate Que with Active Job, you can do it by setting the adapter in `config/application.rb` or in a specific environment by setting it in `config/environments/production.rb`, for example:
+```ruby
+config.active_job.queue_adapter = :que
+```
+
+Que will automatically use the database configuration of your rails application, so there is no need to configure anything else.
+
+You can then write your jobs as usual following the [Active Job documentation](https://guides.rubyonrails.org/active_job_basics.html). However, be aware that you'll lose the ability to finish the job in the same transaction as other database operations. That happens because Active Job is a generic background job framework that doesn't benefit from the database integration Que provides.
+
+If you later decide to switch a job from Active Job to Que to have transactional integrity you can easily change the corresponding job class to inherit from `Que::Job` and follow the usage guidelines in the previous section.
+
 ## Testing
 
 There are a couple ways to do testing. You may want to set `Que::Job.run_synchronously = true`, which will cause JobClass.enqueue to simply execute the job's logic synchronously, as if you'd run JobClass.run(*your_args). Or, you may want to leave it disabled so you can assert on the job state once they are stored in the database.
 
+## Related Projects
+
+These projects are tested to be compatible with Que 1.x:
+
+- [que-web](https://github.com/statianzo/que-web) is a Sinatra-based UI for inspecting your job queue.
+- [que-scheduler](https://github.com/hlascelles/que-scheduler) lets you schedule tasks using a cron style config file.
+
+If you have a project that uses or relates to Que, feel free to submit a PR adding it to the list!
+
 ## Community and Contributing
 
-  * For bugs in the library, please feel free to [open an issue](https://github.com/chanks/que/issues/new).
-  * For general discussion and questions/concerns that don't relate to obvious bugs, try posting on the [que-talk Google Group](https://groups.google.com/forum/#!forum/que-talk).
+  * For bugs in the library, please feel free to [open an issue](https://github.com/que-rb/que/issues/new).
+  * For general discussion and questions/concerns that don't relate to obvious bugs, join our [Discord Server](https://discord.gg/B3EW32H).
   * For contributions, pull requests submitted via Github are welcome.
 
 Regarding contributions, one of the project's priorities is to keep Que as simple, lightweight and dependency-free as possible, and pull requests that change too much or wouldn't be useful to the majority of Que's users have a good chance of being rejected. If you're thinking of submitting a pull request that adds a new feature, consider starting a discussion in [que-talk](https://groups.google.com/forum/#!forum/que-talk) first about what it would do and how it would be implemented. If it's a sufficiently large feature, or if most of Que's users wouldn't find it useful, it may be best implemented as a standalone gem, like some of the related projects above.
